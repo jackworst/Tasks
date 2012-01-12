@@ -44,21 +44,21 @@ var handleFact = function(fact) {
 
 var handleHiFact = function(hiFact) {
 	var key = hiFact.owner + "-" + hiFact.item + "-" + hiFact.property;
-	var oldData = localStorage[key];
+	var oldData = localStorage["-" + key];
 	var oldHiFact = oldData && decodeFact(key + oldData);
 
 	if (oldHiFact) {
-		if (hiFact.timestamp > oldHiFact.timestamp) {
+		if (hiFact.timestamp > oldHiFact.timestamp || hiFact.value > oldHiFact.value) {
 			// replace value and timestamp of existing entry owner-item-property
 			oldHiFact.value = hiFact.value;
 			oldHiFact.timestamp = hiFact.timestamp;
-			localStorage[key] = encodeFactTimestampedValue(oldHiFact);
+			localStorage["-" + key] = encodeFactTimestampedValue(oldHiFact);
 			log("updated", key);
 			updateModelWithHiFact(oldHiFact);
 		}
 	} else {
 		// add new entry owner-item-property
-		localStorage[key] = encodeFactTimestampedValue(hiFact);
+		localStorage["-" + key] = encodeFactTimestampedValue(hiFact);
 		log("added", key);
 		updateModelWithHiFact(hiFact);
 	}
@@ -74,9 +74,10 @@ var updateModelWithHiFact = function(hiFact) {
 
 var iterateFacts = function(cb) {
 	for ( var i = 0; i < localStorage.length; i++) {
-		var key = localStorage.key(i);
-		if (key.charAt(0) === "-") {
-			var fact = key + localStorage[key];
+		var lsKey = localStorage.key(i);
+		if (lsKey.charAt(0) === "-") {
+			var key = lsKey.substring(1);
+			var fact = key + localStorage[lsKey];
 			cb(fact, decodeFact(fact));
 		}
 	}

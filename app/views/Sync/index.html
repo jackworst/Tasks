@@ -21,7 +21,7 @@ var syncUrl = #{jsAction @sync(owner: ':owner', sequence: ':sequence') /};
 <ul>
 #{list items: hiFacts, as:'fact'}
 	<li>
-		${fact.owner}-${fact.item}-${fact.property}@${fact.timestamp.time}=${fact.value} (${fact.sequence})
+		${fact.owner}-${fact.item}-${fact.property}@${fact.timestamp}=${fact.value} (${fact.sequence})
 	</li>
 #{/list}
 </ul>

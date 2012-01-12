@@ -1,18 +1,27 @@
 package controllers;
 
+import java.io.*;
 import java.util.*;
 
 import models.*;
 import play.*;
+import play.libs.*;
 import play.mvc.*;
 import play.mvc.Scope.Params;
 import play.utils.*;
 
 public class Sync extends Controller {
 	public static void index() {
+		// Fact.deleteAll();
+		// for (String factStr : IO.readLines(new
+		// File("/home/jack/gtd/misc/test-facts.txt"))) {
+		// Fact fact = new Fact();
+		// fact.fact = factStr;
+		// fact.save();
+		// }
+
 		List<Fact> facts = Fact.all().fetch();
 		List<HiFact> hiFacts = HiFact.all().fetch();
-		// List<LastSync> lastSyncs = LastSync.all().fetch();
 
 		render(facts, hiFacts);
 	}
@@ -65,7 +74,8 @@ public class Sync extends Controller {
 	private static void handleHiFact(HiFact hiFact) {
 		HiFact oldHiFact = HiFact.find("owner = ? and item = ? and property = ?", hiFact.owner, hiFact.item, hiFact.property).first();
 		if (oldHiFact != null) {
-			if (hiFact.timestamp.after(oldHiFact.timestamp)) {
+			// FIXME: these are not correct semantics
+			if (hiFact.timestamp > oldHiFact.timestamp) {
 				// replace value and timestamp of existing entry
 				// owner-item-property
 				oldHiFact.value = hiFact.value;
