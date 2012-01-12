@@ -74,8 +74,7 @@ public class Sync extends Controller {
 	private static void handleHiFact(HiFact hiFact) {
 		HiFact oldHiFact = HiFact.find("owner = ? and item = ? and property = ?", hiFact.owner, hiFact.item, hiFact.property).first();
 		if (oldHiFact != null) {
-			// FIXME: these are not correct semantics
-			if (hiFact.timestamp > oldHiFact.timestamp) {
+			if (hiFact.compareTo(oldHiFact) > 0) {
 				// replace value and timestamp of existing entry
 				// owner-item-property
 				oldHiFact.value = hiFact.value;
