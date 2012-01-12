@@ -6,3 +6,5 @@
 /db
 /eclipse
 .classpath
+.project
+.settings
