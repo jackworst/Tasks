@@ -1,0 +1,33 @@
+#{extends 'main.html' /}
+#{set title:'Whatever' /}
+
+#{set 'moreScripts' }
+<script src="@{'/public/javascripts/facts.js'}" type="text/javascript" charset="${_response_encoding}"></script>
+<script>
+var syncUrl = #{jsAction @sync(owner: ':owner', sequence: ':sequence') /};
+</script>
+#{/set}
+
+<p>Facts:</p>
+<ul>
+#{list items: facts, as:'fact'}
+	<li>
+		${fact.fact}
+	</li>
+#{/list}
+</ul>
+
+<p>Higher-level Facts:</p>
+<ul>
+#{list items: hiFacts, as:'fact'}
+	<li>
+		${fact.owner}-${fact.item}-${fact.property}@${fact.timestamp.time}=${fact.value} (${fact.sequence})
+	</li>
+#{/list}
+</ul>
+
+<form action="@{handle}">
+	<input type="text" name="facts"/>
+	<input type="submit" value="try it"/>
+</form>
+

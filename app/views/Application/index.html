@@ -1,0 +1,23 @@
+#{extends 'main.html' /}
+#{set title:'Whatever' /}
+
+#{set 'moreScripts' }
+<script src="@{'/public/javascripts/gtd.js'}" type="text/javascript" charset="${_response_encoding}"></script>
+#{/set}
+
+<input type="text" id="query"/>
+<input type="submit" id="find" value="find"/>
+<input type="submit" id="add" value="add"/>
+
+<div id="list"></div>
+
+<p id="counter"/>
+
+<script>
+var getItemUrl = #{jsAction @getItem(':id', ':full') /};
+var setDoneUrl = #{jsAction @setDone(':id', ':done') /};
+var updateItemUrl = #{jsAction @updateItem(':id') /};
+var deleteItemUrl = #{jsAction @deleteItem(':id') /};
+var queryUrl = #{jsAction @list(':query') /};
+var createItemUrl = #{jsAction @createItem() /};
+</script>

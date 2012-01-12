@@ -1,0 +1,25 @@
+.clearfix:after {
+	content: ".";
+	display: block;
+	clear: both;
+	visibility: hidden;
+	line-height: 0;
+	height: 0;
+}
+
+div.item {
+	border: 1px solid black;
+	border-bottom: none;
+}
+
+div.item:last-child {
+	border-bottom: 1px solid black;
+}
+
+div.item button {
+	float: right;
+}
+
+div.item.done .title {
+	text-decoration: line-through;
+}
