@@ -4,3 +4,5 @@
 /test-result
 /logs
 /db
+/eclipse
+.classpath
