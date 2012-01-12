@@ -13,17 +13,11 @@ var decodeFact = function(fact) {
 		owner : keyTokens[0],
 		item : keyTokens[1],
 		property : keyTokens[2],
-		timestamp : new Date(parseInt(fact.substring(at + 1, eq))),
-		// set sequence here and in java constructor too?
+		timestamp : parseInt(fact.substring(at + 1, eq)),
 		value : fact.substring(eq + 1, fact.length)
 	};
 
 	return hiFact;
-};
-
-var extractTimestamp = function(timestampedValue) {
-	var eq = timestampedValue.indexOf("=");
-	return timestampedValue.substring(1, eq);
 };
 
 var encodeFact = function(hiFact) {
@@ -35,7 +29,7 @@ var encodeFactKey = function(hiFact) {
 };
 
 var encodeFactTimestampedValue = function(hiFact) {
-	return "@" + hiFact.timestamp.getTime() + "=" + hiFact.value;
+	return "@" + hiFact.timestamp + "=" + hiFact.value;
 };
 
 var handleFacts = function(facts) {
@@ -59,14 +53,13 @@ var handleHiFact = function(hiFact) {
 			oldHiFact.value = hiFact.value;
 			oldHiFact.timestamp = hiFact.timestamp;
 			localStorage[key] = encodeFactTimestampedValue(oldHiFact);
-			// console.log("updated", key);
+			log("updated", key);
 			updateModelWithHiFact(oldHiFact);
 		}
 	} else {
 		// add new entry owner-item-property
-		hiFact.sequence = new Date().getTime();
 		localStorage[key] = encodeFactTimestampedValue(hiFact);
-		// console.log("added", key);
+		log("added", key);
 		updateModelWithHiFact(hiFact);
 	}
 };
@@ -77,6 +70,53 @@ var updateModelWithHiFact = function(hiFact) {
 		model.items[ownerItem] = {};
 	}
 	model.items[ownerItem][hiFact.property] = hiFact.value;
+};
+
+var iterateFacts = function(cb) {
+	for ( var i = 0; i < localStorage.length; i++) {
+		var key = localStorage.key(i);
+		if (key.charAt(0) === "-") {
+			var fact = key + localStorage[key];
+			cb(fact, decodeFact(fact));
+		}
+	}
+};
+
+var sync = function(doneCb) {
+	// update model and determine facts to be pushed
+	var pushSequence = localStorage.pushSequence || -1;
+	var newPushSequence = new Date().getTime();
+	var factsToPush = [];
+	iterateFacts(function(fact, hiFact) {
+		updateModelWithHiFact(hiFact);
+		if (hiFact.timestamp >= pushSequence) {
+			factsToPush.push(fact);
+		}
+	});
+
+	// push our facts and pull and handle the server's facts (incl. model
+	// update)
+	var sync = syncUrl({
+		owner : myOwnerId,
+		sequence : localStorage.pullSequence || -1
+	});
+	$.ajax({
+		url : sync,
+		type : 'POST',
+		data : {
+			facts : factsToPush
+		},
+		success : function(response) {
+			var newPullSequence = response[0];
+			var facts = response[1];
+			handleFacts(facts);
+			localStorage.pushSequence = newPushSequence;
+			localStorage.pullSequence = newPullSequence;
+			log("facts pushed", factsToPush);
+			log("facts pulled", facts);
+			doneCb();
+		}
+	});
 };
 
 var listItems = function() {
@@ -92,45 +132,16 @@ var listItems = function() {
 	$("body").append('<hr/>').append(div);
 };
 
-$().ready(function() {
-	var sendSequence = localStorage.sendSequence || -1;
-	var newSendSequence = new Date().getTime();
-	var factsToSend = [];
-	for ( var i = 0; i < localStorage.length; i++) {
-		var key = localStorage.key(i);
-		// FIXME: use other keynames, whitelist based!
-		if (key !== "sequence" && key !== "sendSequence") {
-			var oldData = localStorage[key];
-			var oldHiFact = oldData && decodeFact(key + oldData);
-			updateModelWithHiFact(oldHiFact);
-			if (parseInt(extractTimestamp(oldData), 10) > sendSequence) {
-				factsToSend.push(key + oldData);
-			}
-		}
+var log = function() {
+	if (window.console) {
+		console.log(arguments);
+	} else {
+		alert($.map(arguments, JSON.stringify).join(", "));
 	}
-	
-	//factsToSend.push("ed-obj2-blupi@410000=br");
-	console.log("facts up", factsToSend);
+};
 
-	var sync = syncUrl({
-		owner : myOwnerId,
-		sequence : localStorage.sequence || -1
-	});
-	$.ajax({
-		url : sync,
-		type : 'POST',
-		data : {
-			facts : factsToSend
-		},
-		success : function(result) {
-			var newSequence = result[0];
-			var facts = result[1];
-			console.log("facts down", localStorage.sequence, facts)
-			handleFacts(facts);
-			localStorage.sequence = newSequence;
-			localStorage.sendSequence = newSendSequence;
-			
-			listItems();
-		}
+$().ready(function() {
+	sync(function() {
+		listItems();
 	});
 });
